@@ -34,6 +34,8 @@ import os
 import random
 import sys
 import time
+from selenium import webdriver
+
 
 if sys.version_info[0] > 2:
     from http.cookiejar import LWPCookieJar
@@ -54,10 +56,10 @@ except ImportError:
 
 # URL templates to make Google searches.
 url_home = "https://www.google.%(tld)s/"
-url_search = "https://www.google.%(tld)s/search?hl=%(lang)s&q=%(query)s&btnG=Google+Search&tbs=%(tbs)s&safe=%(safe)s&tbm=%(tpe)s"
-url_next_page = "https://www.google.%(tld)s/search?hl=%(lang)s&q=%(query)s&start=%(start)d&tbs=%(tbs)s&safe=%(safe)s&tbm=%(tpe)s"
-url_search_num = "https://www.google.%(tld)s/search?hl=%(lang)s&q=%(query)s&num=%(num)d&btnG=Google+Search&tbs=%(tbs)s&safe=%(safe)s&tbm=%(tpe)s"
-url_next_page_num = "https://www.google.%(tld)s/search?hl=%(lang)s&q=%(query)s&num=%(num)d&start=%(start)d&tbs=%(tbs)s&safe=%(safe)s&tbm=%(tpe)s"
+url_search = "https://www.google.%(tld)s/search?hl=%(lang)s&q=%(query)s&btnG=Google+Search&tbs=%(tbs)s&cr=countryUS&safe=%(safe)s&tbm=%(tpe)s"
+url_next_page = "https://www.google.%(tld)s/search?hl=%(lang)s&q=%(query)s&start=%(start)d&tbs=%(tbs)s&cr=countryUS&safe=%(safe)s&tbm=%(tpe)s"
+url_search_num = "https://www.google.%(tld)s/search?hl=%(lang)s&q=%(query)s&num=%(num)d&btnG=Google+Search&tbs=%(tbs)s&cr=countryUS&safe=%(safe)s&tbm=%(tpe)s"
+url_next_page_num = "https://www.google.%(tld)s/search?hl=%(lang)s&q=%(query)s&num=%(num)d&start=%(start)d&tbs=%(tbs)s&cr=countryUS&safe=%(safe)s&tbm=%(tpe)s"
 
 # Cookie jar. Stored at the user's home folder.
 home_folder = os.getenv('HOME')
@@ -113,17 +115,30 @@ def get_page(url, user_agent=None):
     @raise urllib2.URLError: An exception is raised on error.
     @raise urllib2.HTTPError: An exception is raised on error.
     """
+    # if user_agent is None:
+    #     user_agent = USER_AGENT
+    # request = Request(url)
+    # request.add_header('User-Agent', USER_AGENT)
+    # cookie_jar.add_cookie_header(request)
+    # response = urlopen(request)
+    # cookie_jar.extract_cookies(response, request)
+    # html = response.read()
+    # response.close()
+    # cookie_jar.save()
+    # return html
+    chromeOptions = webdriver.ChromeOptions()
+    prefs = {"profile.managed_default_content_settings.images": 2}
+    chromeOptions.add_experimental_option("prefs", prefs)
     if user_agent is None:
         user_agent = USER_AGENT
-    request = Request(url)
-    request.add_header('User-Agent', USER_AGENT)
-    cookie_jar.add_cookie_header(request)
-    response = urlopen(request)
-    cookie_jar.extract_cookies(response, request)
-    html = response.read()
-    response.close()
-    cookie_jar.save()
+        chromeOptions.add_argument(USER_AGENT)
+    driver = webdriver.Chrome(chrome_options=chromeOptions)
+    driver.set_script_timeout(30)
+    driver.get(url)
+    time.sleep(10)
+    html = driver.page_source
     return html
+
 
 
 # Filter links found in the Google result pages HTML code.
